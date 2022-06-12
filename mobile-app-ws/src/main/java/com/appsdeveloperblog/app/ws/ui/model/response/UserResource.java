@@ -8,7 +8,7 @@ public class UserResource {
     private String firstName;
     private String lastName;
     private String email;
-    private List<AddressesResource> addresses;
+    private List<AddressResource> addresses;
 
     public String getUserId() {
         return userId;
@@ -42,11 +42,11 @@ public class UserResource {
         this.email = email;
     }
 
-    public List<AddressesResource> getAddresses() {
+    public List<AddressResource> getAddresses() {
         return addresses;
     }
 
-    public void setAddresses(List<AddressesResource> addresses) {
+    public void setAddresses(List<AddressResource> addresses) {
         this.addresses = addresses;
     }
 

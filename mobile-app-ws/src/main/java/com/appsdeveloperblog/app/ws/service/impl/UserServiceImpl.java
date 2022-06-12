@@ -1,11 +1,15 @@
 package com.appsdeveloperblog.app.ws.service.impl;
 
+import com.appsdeveloperblog.app.ws.exceptions.UserServiceException;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
+import com.appsdeveloperblog.app.ws.io.repository.PasswordResetTokenRepository;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
 import com.appsdeveloperblog.app.ws.service.UserService;
+import com.appsdeveloperblog.app.ws.shared.AmazonSES;
 import com.appsdeveloperblog.app.ws.shared.Utils;
+import com.appsdeveloperblog.app.ws.shared.dto.AddressDto;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
-import org.springframework.beans.BeanUtils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,26 +23,47 @@ import java.util.List;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private static final int ADDRESS_LENGTH = 30;
+    private static final int PUBLIC_USERID_LENGTH = 30;
+
     private final UserRepository userRepository;
     private final Utils utils;
     private final BCryptPasswordEncoder encoder;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final AmazonSES amazonSES;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, Utils utils, BCryptPasswordEncoder encoder) {
+    public UserServiceImpl(UserRepository userRepository, Utils utils, BCryptPasswordEncoder encoder,
+                           PasswordResetTokenRepository passwordResetTokenRepository,
+                           AmazonSES amazonSES) {
         this.userRepository = userRepository;
         this.utils = utils;
         this.encoder = encoder;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.amazonSES = amazonSES;
     }
 
     @Override
     public UserDto createUser(UserDto user) {
-        UserEntity userEntity = new UserEntity();
-        BeanUtils.copyProperties(user, userEntity);
-        userEntity.setEncryptedPassword("test");
-        UserEntity savedUser = userRepository.save(userEntity);
-        UserDto returnedUser = new UserDto();
-        BeanUtils.copyProperties(savedUser, returnedUser);
-        return returnedUser;
+        if (userRepository.findByEmail(user.getEmail()) != null) {
+            throw new UserServiceException("Record already exists");
+        }
+        List<AddressDto> addressDtoList = user.getAddresses();
+        if (!addressDtoList.isEmpty()) {
+            user.getAddresses().forEach(addressDto -> {
+                addressDto.setUserDetails(user);
+                addressDto.setAddressId(utils.generateAddressId(ADDRESS_LENGTH));
+            });
+        }
+        ModelMapper modelMapper = new ModelMapper();
+        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
+        String publicUserId = utils.generateUserId(PUBLIC_USERID_LENGTH);
+        userEntity.setUserId(publicUserId);
+        userEntity.setEncryptedPassword(encoder.encode(user.getPassword()));
+        userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
+        UserEntity storedUserDetails = userRepository.save(userEntity);
+        //amazonSES.verifyEmail(returnValue);
+        return modelMapper.map(storedUserDetails, UserDto.class);
     }
 
     @Override
