@@ -1,5 +1,6 @@
 package com.appsdeveloperblog.app.ws.ui.model.response;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserResource {
@@ -8,7 +9,7 @@ public class UserResource {
     private String firstName;
     private String lastName;
     private String email;
-    private List<AddressResource> addresses;
+    private List<AddressResource> addresses = new ArrayList<>();
 
     public String getUserId() {
         return userId;

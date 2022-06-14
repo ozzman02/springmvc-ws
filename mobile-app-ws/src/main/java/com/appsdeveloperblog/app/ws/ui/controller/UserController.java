@@ -39,7 +39,7 @@ public class UserController {
     @Autowired
     private AddressService addressService;
 
-    @ApiOperation(
+    /*@ApiOperation(
             value = "The Get User Details Web Service Endpoint",
             notes = "${userController.GetUser.ApiOperation.Notes}"
     )
@@ -49,17 +49,15 @@ public class UserController {
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })
+    })*/
     @GetMapping(
             path = "/{id}",
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
     )
     public UserResource getUser(@PathVariable String id) {
-        UserResource returnValue = new UserResource();
         UserDto userDto = userService.getUserByUserId(id);
         ModelMapper modelMapper = new ModelMapper();
-        returnValue = modelMapper.map(userDto, UserResource.class);
-        return returnValue;
+        return modelMapper.map(userDto, UserResource.class);
     }
 
     @PostMapping(
@@ -73,18 +71,18 @@ public class UserController {
         return modelMapper.map(createdUser, UserResource.class);
     }
 
-    @PutMapping(
-            path = "/{id}",
-            consumes = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE },
-            produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
-    )
-    @ApiImplicitParams({
+    /*@ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })
+    })*/
+    @PutMapping(
+            path = "/{id}",
+            consumes = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE },
+            produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
+    )
     public UserResource updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) {
         UserResource returnValue = new UserResource();
         UserDto userDto = new UserDto();
@@ -94,17 +92,17 @@ public class UserController {
         return returnValue;
     }
 
-    @DeleteMapping(
-            path = "/{id}",
-            produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
-    )
-    @ApiImplicitParams({
+    /*@ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })
+    })*/
+    @DeleteMapping(
+            path = "/{id}",
+            produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
+    )
     public OperationStatusModel deleteUser(@PathVariable String id) {
         OperationStatusModel returnValue = new OperationStatusModel();
         returnValue.setOperationName(RequestOperationName.DELETE.name());
@@ -113,14 +111,14 @@ public class UserController {
         return returnValue;
     }
 
-    @ApiImplicitParams({
+    /*@ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })
-    @GetMapping(produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    })*/
+    /*@GetMapping(produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public List<UserResource> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
                                        @RequestParam(value = "limit", defaultValue = "2") int limit) {
         List<UserResource> returnValue = new ArrayList<>();
@@ -128,15 +126,20 @@ public class UserController {
         Type listType = new TypeToken<List<UserResource>>() {}.getType();
         returnValue = new ModelMapper().map(users, listType);
         return returnValue;
+    }*/
+
+    @GetMapping
+    public String getUsers() {
+        return "getUsers was called";
     }
 
-    @ApiImplicitParams({
+    /*@ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })
+    })*/
     @GetMapping(path = "/{id}/addresses", produces = { MediaType.APPLICATION_XML_VALUE,
             MediaType.APPLICATION_JSON_VALUE, "application/hal+json" })
     public List<AddressResource> getUserAddresses(@PathVariable String id) {
@@ -157,13 +160,13 @@ public class UserController {
         return addressesListRestModel;
     }
 
-    @ApiImplicitParams({
+    /*@ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })
+    })*/
     @GetMapping(
             path = "/{userId}/addresses/{addressId}",
             produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE, "application/hal+json" }

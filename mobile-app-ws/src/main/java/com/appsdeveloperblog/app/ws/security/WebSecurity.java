@@ -1,6 +1,7 @@
 package com.appsdeveloperblog.app.ws.security;
 
 import com.appsdeveloperblog.app.ws.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,12 +25,13 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     private final UserService userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
+    @Autowired
     public WebSecurity(UserService userDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userDetailsService = userDetailsService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
-    @Bean
+    /*@Bean
     public CorsConfigurationSource corsConfigurationSource()
     {
         final CorsConfiguration configuration = new CorsConfiguration();
@@ -43,9 +45,22 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
-    }
+    }*/
 
     @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+                .csrf().disable().authorizeRequests()
+                .antMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL)
+                .permitAll()
+                .anyRequest().authenticated()
+                .and()
+                .addFilter(getAuthenticationFilter())
+                .addFilter(new AuthorizationFilter(authenticationManager()))
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+    }
+    /*@Override
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .cors().and()
@@ -59,9 +74,9 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, SecurityConstants.PASSWORD_RESET_URL)
                 .permitAll()
                 .antMatchers(SecurityConstants.H2_CONSOLE)
-                .permitAll()
-                .antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**")
-                .permitAll()
+                .permitAll()*/
+                //.antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**")
+                /*.permitAll()
                 .anyRequest().authenticated().and()
                 .addFilter(getAuthenticationFilter())
                 .addFilter(new AuthorizationFilter(authenticationManager()))
@@ -69,14 +84,18 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         http.headers().frameOptions().disable();
-    }
+    }*/
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
     }
 
-    protected AuthenticationFilter getAuthenticationFilter() throws Exception {
+    /*
+        Customize the authentication URL.
+        Default is: http://localhost:8080/mobile-app-ws/login
+    */
+    public AuthenticationFilter getAuthenticationFilter() throws Exception {
         final AuthenticationFilter filter = new AuthenticationFilter(authenticationManager());
         filter.setFilterProcessesUrl("/users/login");
         return filter;

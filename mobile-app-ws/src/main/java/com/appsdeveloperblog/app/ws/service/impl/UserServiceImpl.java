@@ -1,6 +1,7 @@
 package com.appsdeveloperblog.app.ws.service.impl;
 
 import com.appsdeveloperblog.app.ws.exceptions.UserServiceException;
+import com.appsdeveloperblog.app.ws.io.entity.AddressEntity;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.io.repository.PasswordResetTokenRepository;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
@@ -9,8 +10,11 @@ import com.appsdeveloperblog.app.ws.shared.AmazonSES;
 import com.appsdeveloperblog.app.ws.shared.Utils;
 import com.appsdeveloperblog.app.ws.shared.dto.AddressDto;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
+import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.Banner;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -68,12 +72,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(String email) {
-        return null;
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) {
+            throw new UsernameNotFoundException(email);
+        }
+        UserDto returnValue = new UserDto();
+        BeanUtils.copyProperties(userEntity, returnValue);
+        return returnValue;
     }
 
     @Override
     public UserDto getUserByUserId(String userId) {
-        return null;
+        UserDto returnValue = new UserDto();
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        if (userEntity == null) {
+            throw new UsernameNotFoundException("User with ID: " + userId + " not found");
+        }
+        List<AddressEntity> addressEntityList = userEntity.getAddresses();
+        if (!addressEntityList.isEmpty()) {
+            copyAddressEntityListIntoAddressDtoList(addressEntityList, returnValue.getAddresses());
+        }
+        BeanUtils.copyProperties(userEntity, returnValue);
+        return returnValue;
     }
 
     @Override
@@ -112,10 +132,25 @@ public class UserServiceImpl implements UserService {
         if (userEntity == null) {
             throw new UsernameNotFoundException(email);
         }
-        return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(),
-                userEntity.getEmailVerificationStatus(),
-                true, true,
-                true, new ArrayList<>());
+        User user = new User(
+                userEntity.getEmail(),
+                userEntity.getEncryptedPassword(),
+                true,
+                true,
+                true,
+                true,
+                new ArrayList<>()
+        );
+        return user;
+    }
+
+    private void copyAddressEntityListIntoAddressDtoList(List<AddressEntity> addressEntityList,
+                                                         List<AddressDto> addressDtoList) {
+        for (AddressEntity addressEntity : addressEntityList) {
+            AddressDto addressDto = new AddressDto();
+            BeanUtils.copyProperties(addressEntity, addressDto);
+            addressDtoList.add(addressDto);
+        }
     }
 
 }
