@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @ControllerAdvice
@@ -15,13 +16,15 @@ public class AppExceptionHandler {
 
     @ExceptionHandler(value = {UserServiceException.class})
     public ResponseEntity<Object> handleUserServiceException(UserServiceException ex, WebRequest request) {
-        ErrorMessage errorMessage = new ErrorMessage(new Date(), ex.getMessage());
-        return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
+        ErrorMessage errorMessage = new ErrorMessage(LocalDateTime.now().toString(), ex.getMessage(),
+                request.getDescription(false));
+        return new ResponseEntity<>(errorMessage, new HttpHeaders(), ex.getHttpStatus());
     }
 
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity<Object> handleOtherExceptions(Exception ex, WebRequest request) {
-        ErrorMessage errorMessage = new ErrorMessage(new Date(), ex.getMessage());
+        ErrorMessage errorMessage = new ErrorMessage(LocalDateTime.now().toString(), ex.getMessage(),
+                request.getDescription(false));
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

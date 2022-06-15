@@ -1,25 +1,27 @@
 package com.appsdeveloperblog.app.ws.ui.model.response;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public class ErrorMessage {
 
-    private Date timestamp;
+    private String timestamp;
     private String message;
+    private String details;
 
     public ErrorMessage() {}
 
-    public ErrorMessage(Date timestamp, String message)
+    public ErrorMessage(String timestamp, String message, String details)
     {
         this.timestamp = timestamp;
         this.message = message;
+        this.details = details;
     }
 
-    public Date getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -31,4 +33,11 @@ public class ErrorMessage {
         this.message = message;
     }
 
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
 }

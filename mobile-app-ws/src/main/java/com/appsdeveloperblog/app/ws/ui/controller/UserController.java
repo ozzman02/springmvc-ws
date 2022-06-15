@@ -84,12 +84,9 @@ public class UserController {
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
     )
     public UserResource updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) {
-        UserResource returnValue = new UserResource();
-        UserDto userDto = new UserDto();
-        userDto = new ModelMapper().map(userDetails, UserDto.class);
+        UserDto userDto = new ModelMapper().map(userDetails, UserDto.class);
         UserDto updateUser = userService.updateUser(id, userDto);
-        returnValue = new ModelMapper().map(updateUser, UserResource.class);
-        return returnValue;
+        return new ModelMapper().map(updateUser, UserResource.class);
     }
 
     /*@ApiImplicitParams({
