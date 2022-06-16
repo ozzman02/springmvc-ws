@@ -11,19 +11,19 @@ import com.appsdeveloperblog.app.ws.shared.Utils;
 import com.appsdeveloperblog.app.ws.shared.dto.AddressDto;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
 import com.appsdeveloperblog.app.ws.ui.model.response.ErrorMessages;
-
-
-import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.Banner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,18 +89,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserByUserId(String userId) {
-        UserDto returnValue = new UserDto();
         UserEntity userEntity = userRepository.findByUserId(userId);
         if (userEntity == null) {
             throw new UserServiceException(
                     ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
-        List<AddressEntity> addressEntityList = userEntity.getAddresses();
-        if (!addressEntityList.isEmpty()) {
-            copyAddressEntityListIntoAddressDtoList(addressEntityList, returnValue.getAddresses());
-        }
-        BeanUtils.copyProperties(userEntity, returnValue);
-        return returnValue;
+        return createUserDto(userEntity);
     }
 
     @Override
@@ -116,14 +110,26 @@ public class UserServiceImpl implements UserService {
         return  new ModelMapper().map(updatedUserDetails, UserDto.class);
     }
 
+    @Transactional
     @Override
     public void deleteUser(String userId) {
-
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        if (userEntity == null) {
+            throw new UserServiceException(
+                    ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
+        }
+        userRepository.delete(userEntity);
     }
 
     @Override
     public List<UserDto> getUsers(int page, int limit) {
-        return null;
+        if (page > 0) {
+            page = page - 1;
+        }
+        Pageable pageableRequest = PageRequest.of(page, limit);
+        Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
+        List<UserEntity> users = usersPage.getContent();
+        return createUserDtoList(users);
     }
 
     @Override
@@ -147,7 +153,7 @@ public class UserServiceImpl implements UserService {
         if (userEntity == null) {
             throw new UsernameNotFoundException(email);
         }
-        User user = new User(
+        return new User(
                 userEntity.getEmail(),
                 userEntity.getEncryptedPassword(),
                 true,
@@ -156,16 +162,30 @@ public class UserServiceImpl implements UserService {
                 true,
                 new ArrayList<>()
         );
-        return user;
     }
 
-    private void copyAddressEntityListIntoAddressDtoList(List<AddressEntity> addressEntityList,
-                                                         List<AddressDto> addressDtoList) {
-        for (AddressEntity addressEntity : addressEntityList) {
-            AddressDto addressDto = new AddressDto();
-            BeanUtils.copyProperties(addressEntity, addressDto);
-            addressDtoList.add(addressDto);
+    private UserDto createUserDto(UserEntity userEntity) {
+        UserDto userDto = new UserDto();
+        List<AddressEntity> addressEntityList = userEntity.getAddresses();
+        if (!addressEntityList.isEmpty()) {
+            List<AddressDto> addressDtoList = new ArrayList<>();
+            for (AddressEntity addressEntity : addressEntityList) {
+                AddressDto addressDto = new AddressDto();
+                BeanUtils.copyProperties(addressEntity, addressDto);
+                addressDtoList.add(addressDto);
+            }
+            userDto.setAddresses(addressDtoList);
         }
+        BeanUtils.copyProperties(userEntity, userDto);
+        return userDto;
+    }
+
+    private List<UserDto> createUserDtoList(List<UserEntity> users) {
+        List<UserDto> userDtoList = new ArrayList<>();
+        for (UserEntity userEntity : users) {
+            userDtoList.add(createUserDto(userEntity));
+        }
+        return userDtoList;
     }
 
 }

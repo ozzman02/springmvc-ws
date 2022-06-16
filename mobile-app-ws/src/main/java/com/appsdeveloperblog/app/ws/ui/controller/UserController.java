@@ -30,7 +30,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 
 @RestController
-@RequestMapping("/users")  // http://localhost:8080/users
+@RequestMapping("/users")  // http://localhost:8080/mobile-app-ws/users
 public class UserController {
 
     @Autowired
@@ -115,19 +115,12 @@ public class UserController {
                     paramType="header"
             )
     })*/
-    /*@GetMapping(produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    @GetMapping(produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public List<UserResource> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
                                        @RequestParam(value = "limit", defaultValue = "2") int limit) {
-        List<UserResource> returnValue = new ArrayList<>();
         List<UserDto> users = userService.getUsers(page, limit);
         Type listType = new TypeToken<List<UserResource>>() {}.getType();
-        returnValue = new ModelMapper().map(users, listType);
-        return returnValue;
-    }*/
-
-    @GetMapping
-    public String getUsers() {
-        return "getUsers was called";
+        return new ModelMapper().map(users, listType);
     }
 
     /*@ApiImplicitParams({
@@ -137,15 +130,18 @@ public class UserController {
                     paramType="header"
             )
     })*/
-    @GetMapping(path = "/{id}/addresses", produces = { MediaType.APPLICATION_XML_VALUE,
-            MediaType.APPLICATION_JSON_VALUE, "application/hal+json" })
+    @GetMapping(
+            path = "/{id}/addresses",
+            produces = { MediaType.APPLICATION_XML_VALUE,
+            MediaType.APPLICATION_JSON_VALUE, "application/hal+json" }
+    )
     public List<AddressResource> getUserAddresses(@PathVariable String id) {
-        List<AddressResource> addressesListRestModel = new ArrayList<>();
+        List<AddressResource> addressResourceList = new ArrayList<>();
         List<AddressDto> addressesDTO = addressService.getAddresses(id);
         if (addressesDTO != null && !addressesDTO.isEmpty()) {
             Type listType = new TypeToken<List<AddressResource>>() {}.getType();
-            addressesListRestModel = new ModelMapper().map(addressesDTO, listType);
-            for (AddressResource addressResource : addressesListRestModel) {
+            addressResourceList = new ModelMapper().map(addressesDTO, listType);
+            for (AddressResource addressResource : addressResourceList) {
                 Link addressLink = linkTo(methodOn(UserController.class)
                         .getUserAddress(id, addressResource.getAddressId())
                 ).withSelfRel();
@@ -154,7 +150,7 @@ public class UserController {
                 addressResource.add(userLink);
             }
         }
-        return addressesListRestModel;
+        return addressResourceList;
     }
 
     /*@ApiImplicitParams({
