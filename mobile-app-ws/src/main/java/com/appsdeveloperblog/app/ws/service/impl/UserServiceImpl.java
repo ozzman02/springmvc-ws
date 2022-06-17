@@ -82,9 +82,9 @@ public class UserServiceImpl implements UserService {
             throw new UserServiceException(
                     ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
-        UserDto returnValue = new UserDto();
-        BeanUtils.copyProperties(userEntity, returnValue);
-        return returnValue;
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userEntity, userDto);
+        return userDto;
     }
 
     @Override
@@ -94,7 +94,7 @@ public class UserServiceImpl implements UserService {
             throw new UserServiceException(
                     ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
-        return createUserDto(userEntity);
+        return getUserDto(userEntity);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class UserServiceImpl implements UserService {
         Pageable pageableRequest = PageRequest.of(page, limit);
         Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
         List<UserEntity> users = usersPage.getContent();
-        return createUserDtoList(users);
+        return getUserDtoList(users);
     }
 
     @Override
@@ -164,7 +164,7 @@ public class UserServiceImpl implements UserService {
         );
     }
 
-    private UserDto createUserDto(UserEntity userEntity) {
+    private UserDto getUserDto(UserEntity userEntity) {
         UserDto userDto = new UserDto();
         List<AddressEntity> addressEntityList = userEntity.getAddresses();
         if (!addressEntityList.isEmpty()) {
@@ -180,10 +180,10 @@ public class UserServiceImpl implements UserService {
         return userDto;
     }
 
-    private List<UserDto> createUserDtoList(List<UserEntity> users) {
+    private List<UserDto> getUserDtoList(List<UserEntity> users) {
         List<UserDto> userDtoList = new ArrayList<>();
         for (UserEntity userEntity : users) {
-            userDtoList.add(createUserDto(userEntity));
+            userDtoList.add(getUserDto(userEntity));
         }
         return userDtoList;
     }
