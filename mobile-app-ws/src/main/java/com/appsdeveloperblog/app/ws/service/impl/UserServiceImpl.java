@@ -1,6 +1,6 @@
 package com.appsdeveloperblog.app.ws.service.impl;
 
-import com.appsdeveloperblog.app.ws.exceptions.UserServiceException;
+import com.appsdeveloperblog.app.ws.exceptions.ServiceException;
 import com.appsdeveloperblog.app.ws.io.entity.AddressEntity;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.io.repository.PasswordResetTokenRepository;
@@ -10,8 +10,12 @@ import com.appsdeveloperblog.app.ws.shared.AmazonSES;
 import com.appsdeveloperblog.app.ws.shared.Utils;
 import com.appsdeveloperblog.app.ws.shared.dto.AddressDto;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
+import com.appsdeveloperblog.app.ws.ui.model.response.AddressResource;
 import com.appsdeveloperblog.app.ws.ui.model.response.ErrorMessages;
+import io.swagger.models.Model;
+import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,6 +29,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,62 +57,45 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto createUser(UserDto user) {
-        if (userRepository.findByEmail(user.getEmail()) != null) {
-            throw new UserServiceException(
+    public UserDto createUser(UserDto userDto) {
+        if (userRepository.findByEmail(userDto.getEmail()) != null) {
+            throw new ServiceException(
                     ErrorMessages.RECORD_ALREADY_EXISTS.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
-        List<AddressDto> addressDtoList = user.getAddresses();
-        if (!addressDtoList.isEmpty()) {
-            user.getAddresses().forEach(addressDto -> {
-                addressDto.setUserDetails(user);
-                addressDto.setAddressId(utils.generateAddressId(ADDRESS_LENGTH));
-            });
-        }
-        ModelMapper modelMapper = new ModelMapper();
-        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
-        String publicUserId = utils.generateUserId(PUBLIC_USERID_LENGTH);
-        userEntity.setUserId(publicUserId);
-        userEntity.setEncryptedPassword(encoder.encode(user.getPassword()));
-        userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
-        UserEntity storedUserDetails = userRepository.save(userEntity);
-        //amazonSES.verifyEmail(returnValue);
-        return modelMapper.map(storedUserDetails, UserDto.class);
+        return buildUserDto(userDto);
     }
 
     @Override
     public UserDto getUser(String email) {
         UserEntity userEntity = userRepository.findByEmail(email);
         if (userEntity == null) {
-            throw new UserServiceException(
+            throw new ServiceException(
                     ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userEntity, userDto);
-        return userDto;
+        return new ModelMapper().map(userEntity, UserDto.class);
     }
 
     @Override
     public UserDto getUserByUserId(String userId) {
         UserEntity userEntity = userRepository.findByUserId(userId);
         if (userEntity == null) {
-            throw new UserServiceException(
+            throw new ServiceException(
                     ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
-        return getUserDto(userEntity);
+        return new ModelMapper().map(userEntity, UserDto.class);
     }
 
     @Override
     public UserDto updateUser(String userId, UserDto user) {
         UserEntity userEntity = userRepository.findByUserId(userId);
         if (userEntity == null) {
-            throw new UserServiceException(
+            throw new ServiceException(
                     ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
         userEntity.setFirstName(user.getFirstName());
         userEntity.setLastName(user.getLastName());
         UserEntity updatedUserDetails = userRepository.save(userEntity);
-        return  new ModelMapper().map(updatedUserDetails, UserDto.class);
+        return new ModelMapper().map(updatedUserDetails, UserDto.class);
     }
 
     @Transactional
@@ -115,7 +103,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(String userId) {
         UserEntity userEntity = userRepository.findByUserId(userId);
         if (userEntity == null) {
-            throw new UserServiceException(
+            throw new ServiceException(
                     ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
         userRepository.delete(userEntity);
@@ -129,7 +117,8 @@ public class UserServiceImpl implements UserService {
         Pageable pageableRequest = PageRequest.of(page, limit);
         Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
         List<UserEntity> users = usersPage.getContent();
-        return getUserDtoList(users);
+        Type userDtoListType = new TypeToken<List<UserDto>>() {}.getType();
+        return new ModelMapper().map(users, userDtoListType);
     }
 
     @Override
@@ -164,28 +153,23 @@ public class UserServiceImpl implements UserService {
         );
     }
 
-    private UserDto getUserDto(UserEntity userEntity) {
-        UserDto userDto = new UserDto();
-        List<AddressEntity> addressEntityList = userEntity.getAddresses();
-        if (!addressEntityList.isEmpty()) {
-            List<AddressDto> addressDtoList = new ArrayList<>();
-            for (AddressEntity addressEntity : addressEntityList) {
-                AddressDto addressDto = new AddressDto();
-                BeanUtils.copyProperties(addressEntity, addressDto);
-                addressDtoList.add(addressDto);
-            }
-            userDto.setAddresses(addressDtoList);
+    private UserDto buildUserDto(UserDto userDto) {
+        List<AddressDto> addressDtoList = userDto.getAddresses();
+        if (!addressDtoList.isEmpty()) {
+            userDto.getAddresses().forEach(addressDto -> {
+                addressDto.setUserDetails(userDto);
+                addressDto.setAddressId(utils.generateAddressId(ADDRESS_LENGTH));
+            });
         }
-        BeanUtils.copyProperties(userEntity, userDto);
-        return userDto;
-    }
-
-    private List<UserDto> getUserDtoList(List<UserEntity> users) {
-        List<UserDto> userDtoList = new ArrayList<>();
-        for (UserEntity userEntity : users) {
-            userDtoList.add(getUserDto(userEntity));
-        }
-        return userDtoList;
+        ModelMapper modelMapper = new ModelMapper();
+        UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
+        String publicUserId = utils.generateUserId(PUBLIC_USERID_LENGTH);
+        userEntity.setUserId(publicUserId);
+        userEntity.setEncryptedPassword(encoder.encode(userDto.getPassword()));
+        userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
+        UserEntity storedUserEntity = userRepository.save(userEntity);
+        //amazonSES.verifyEmail(returnValue);
+        return modelMapper.map(storedUserEntity, UserDto.class);
     }
 
 }

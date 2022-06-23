@@ -2,7 +2,7 @@ package com.appsdeveloperblog.app.ws.exceptions;
 
 import org.springframework.http.HttpStatus;
 
-public class UserServiceException extends RuntimeException {
+public class ServiceException extends RuntimeException {
 
     private static final long serialVersionUID = 180832930409211414L;
 
@@ -12,7 +12,7 @@ public class UserServiceException extends RuntimeException {
         return httpStatus;
     }
 
-    public UserServiceException(String message, HttpStatus httpStatus) {
+    public ServiceException(String message, HttpStatus httpStatus) {
         super(message);
         this.httpStatus = httpStatus;
     }

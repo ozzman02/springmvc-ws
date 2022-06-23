@@ -9,13 +9,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @ControllerAdvice
 public class AppExceptionHandler {
 
-    @ExceptionHandler(value = {UserServiceException.class})
-    public ResponseEntity<Object> handleUserServiceException(UserServiceException ex, WebRequest request) {
+    @ExceptionHandler(value = {ServiceException.class})
+    public ResponseEntity<Object> handleUserServiceException(ServiceException ex, WebRequest request) {
         ErrorMessage errorMessage = new ErrorMessage(LocalDateTime.now().toString(), ex.getMessage(),
                 request.getDescription(false));
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), ex.getHttpStatus());

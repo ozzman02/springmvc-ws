@@ -9,7 +9,7 @@ public class UserResource {
     private String firstName;
     private String lastName;
     private String email;
-    private List<AddressResource> addresses = new ArrayList<>();
+    private List<AddressResource> addresses;
 
     public String getUserId() {
         return userId;

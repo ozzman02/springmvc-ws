@@ -15,6 +15,7 @@ import java.util.List;
 @Repository
 public interface UserRepository extends PagingAndSortingRepository<UserEntity, Long> {
 
+    @Query(value = "select user from UserEntity user join fetch user.addresses where user.email =:email")
     UserEntity findByEmail(String email);
 
     UserEntity findByUserId(String userId);

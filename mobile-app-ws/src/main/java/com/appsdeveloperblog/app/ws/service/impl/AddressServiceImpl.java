@@ -1,16 +1,20 @@
 package com.appsdeveloperblog.app.ws.service.impl;
 
+import com.appsdeveloperblog.app.ws.exceptions.ServiceException;
 import com.appsdeveloperblog.app.ws.io.entity.AddressEntity;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.io.repository.AddressRepository;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
 import com.appsdeveloperblog.app.ws.service.AddressService;
 import com.appsdeveloperblog.app.ws.shared.dto.AddressDto;
+import com.appsdeveloperblog.app.ws.ui.model.response.ErrorMessages;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.lang.reflect.Type;
 import java.util.List;
 
 @Service
@@ -28,27 +32,24 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public List<AddressDto> getAddresses(String userId) {
-        List<AddressDto> returnValue = new ArrayList<>();
-        ModelMapper modelMapper = new ModelMapper();
         UserEntity userEntity = userRepository.findByUserId(userId);
         if (userEntity == null) {
-            return returnValue;
+            throw new ServiceException(
+                    ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
         Iterable<AddressEntity> addresses = addressRepository.findAllByUserDetails(userEntity);
-        for(AddressEntity addressEntity:addresses) {
-            returnValue.add(modelMapper.map(addressEntity, AddressDto.class));
-        }
-        return returnValue;
+        Type addressDtoListType = new TypeToken<List<AddressDto>>() {}.getType();
+        return new ModelMapper().map(addresses, addressDtoListType);
     }
 
     @Override
     public AddressDto getAddress(String addressId) {
-        AddressDto returnValue = null;
         AddressEntity addressEntity = addressRepository.findByAddressId(addressId);
-        if (addressEntity != null) {
-            returnValue = new ModelMapper().map(addressEntity, AddressDto.class);
+        if (addressEntity == null) {
+            throw new ServiceException (
+                    ErrorMessages.NO_RECORD_FOUND.getErrorMessage(), HttpStatus.BAD_REQUEST);
         }
-        return returnValue;
+        return new ModelMapper().map(addressEntity, AddressDto.class);
     }
 
 }
