@@ -1,6 +1,5 @@
 package com.appsdeveloperblog.app.ws.ui.model.response;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class UserResource {
