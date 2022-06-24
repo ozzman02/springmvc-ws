@@ -1,6 +1,7 @@
 package com.appsdeveloperblog.app.ws.service.impl;
 
 import com.appsdeveloperblog.app.ws.exceptions.ServiceException;
+import com.appsdeveloperblog.app.ws.io.entity.PasswordResetTokenEntity;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.io.repository.PasswordResetTokenRepository;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
@@ -132,12 +133,41 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean requestPasswordReset(String email) {
-        return false;
+        boolean returnValue;
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) {
+            return false;
+        }
+        String token = new Utils().generatePasswordResetToken(userEntity.getUserId());
+        PasswordResetTokenEntity passwordResetTokenEntity = new PasswordResetTokenEntity();
+        passwordResetTokenEntity.setToken(token);
+        passwordResetTokenEntity.setUserDetails(userEntity);
+        passwordResetTokenRepository.save(passwordResetTokenEntity);
+        returnValue = amazonSES.sendPasswordResetRequest(
+                userEntity.getFirstName(),
+                userEntity.getEmail(),
+                token);
+
+        return returnValue;
     }
 
     @Override
     public boolean resetPassword(String token, String password) {
-        return false;
+        if( Utils.hasTokenExpired(token) ) {
+            return false;
+        }
+        PasswordResetTokenEntity passwordResetTokenEntity = passwordResetTokenRepository.findByToken(token);
+        if (passwordResetTokenEntity == null) {
+            return false;
+        }
+        String encodedPassword = encoder.encode(password);
+        UserEntity userEntity = passwordResetTokenEntity.getUserDetails();
+        userEntity.setEncryptedPassword(encodedPassword);
+        userRepository.save(userEntity);
+
+        // Remove Password Reset token from database
+        passwordResetTokenRepository.delete(passwordResetTokenEntity);
+        return true;
     }
 
     @Override
@@ -173,8 +203,9 @@ public class UserServiceImpl implements UserService {
         userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
         userEntity.setEmailVerificationStatus(false);
         UserEntity storedUserEntity = userRepository.save(userEntity);
-        //amazonSES.verifyEmail(returnValue);
-        return modelMapper.map(storedUserEntity, UserDto.class);
+        UserDto returnedUserDto = modelMapper.map(storedUserEntity, UserDto.class);
+        amazonSES.verifyEmail(returnedUserDto);
+        return returnedUserDto;
     }
 
 }

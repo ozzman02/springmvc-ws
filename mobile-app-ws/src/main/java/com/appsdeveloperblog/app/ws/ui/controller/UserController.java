@@ -225,6 +225,7 @@ public class UserController {
 
     @PostMapping(
             path = "/password-reset",
+            produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
             consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}
     )
     public OperationStatusModel resetPassword(@RequestBody PasswordResetModel passwordResetModel) {
@@ -234,9 +235,10 @@ public class UserController {
                 passwordResetModel.getPassword()
         );
         returnValue.setOperationName(RequestOperationName.PASSWORD_RESET.name());
-        returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
         if (operationResult) {
             returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+        } else {
+            returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
         }
         return returnValue;
     }

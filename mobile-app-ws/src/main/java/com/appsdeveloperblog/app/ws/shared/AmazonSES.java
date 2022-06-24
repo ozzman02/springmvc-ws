@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 public class AmazonSES {
 
     // This address must be verified with Amazon SES.
-    final String FROM = "oscar.santamaria@gmail.com";
+    final String FROM = "oscar.santamaria.venegas@gmail.com";
 
     // The subject line for the email.
     final String SUBJECT = "One last step to complete your registration with PhotoApp";
@@ -38,7 +38,7 @@ public class AmazonSES {
             + "<p>Hi, $firstName!</p> "
             + "<p>Someone has requested to reset your password with our project. If it were not you, please ignore it."
             + " otherwise please click on the link below to set a new password: "
-            + "<a href='http://localhost:8080/verification-service/password-reset.html?token=$tokenValue'>"
+            + "<a href='http://localhost:8080/email-verification-service/password-reset.html?token=$tokenValue'>"
             + " Click this link to Reset Password"
             + "</a><br/><br/>"
             + "Thank you!";
@@ -48,7 +48,7 @@ public class AmazonSES {
             + "Hi, $firstName! "
             + "Someone has requested to reset your password with our project. If it were not you, please ignore it."
             + " otherwise please open the link below in your browser window to set a new password:"
-            + " http://localhost:8080/verification-service/password-reset.html?token=$tokenValue"
+            + " http://localhost:8080/email-verification-service/password-reset.html?token=$tokenValue"
             + " Thank you!";
 
 
@@ -59,6 +59,8 @@ public class AmazonSES {
             System.setProperty("aws.accessKeyId", "<YOUR KEY ID HERE>");
             System.setProperty("aws.secretKey", "<SECRET KEY HERE>");
         */
+        System.setProperty("aws.accessKeyId", "AKIAR76RYAZUU3PQ7V4D");
+        System.setProperty("aws.secretKey", "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");
 
         AmazonSimpleEmailService client =
                 AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
