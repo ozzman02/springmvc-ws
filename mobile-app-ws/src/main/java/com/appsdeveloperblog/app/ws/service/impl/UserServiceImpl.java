@@ -1,7 +1,6 @@
 package com.appsdeveloperblog.app.ws.service.impl;
 
 import com.appsdeveloperblog.app.ws.exceptions.ServiceException;
-import com.appsdeveloperblog.app.ws.io.entity.AddressEntity;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.io.repository.PasswordResetTokenRepository;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
@@ -10,13 +9,9 @@ import com.appsdeveloperblog.app.ws.shared.AmazonSES;
 import com.appsdeveloperblog.app.ws.shared.Utils;
 import com.appsdeveloperblog.app.ws.shared.dto.AddressDto;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
-import com.appsdeveloperblog.app.ws.ui.model.response.AddressResource;
 import com.appsdeveloperblog.app.ws.ui.model.response.ErrorMessages;
-import io.swagger.models.Model;
-import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -111,9 +106,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(int page, int limit) {
-        if (page > 0) {
-            page = page - 1;
-        }
+        if (page > 0) page = page - 1;
         Pageable pageableRequest = PageRequest.of(page, limit);
         Page<UserEntity> usersPage = userRepository.findAll(pageableRequest);
         List<UserEntity> users = usersPage.getContent();
@@ -123,7 +116,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean verifyEmailToken(String token) {
-        return false;
+        boolean isVerified = false;
+        UserEntity userEntity = userRepository.findUserByEmailVerificationToken(token);
+        if (userEntity != null) {
+            boolean hasTokenExpired = Utils.hasTokenExpired(token);
+            if (!hasTokenExpired) {
+                userEntity.setEmailVerificationToken(null);
+                userEntity.setEmailVerificationStatus(Boolean.TRUE);
+                userRepository.save(userEntity);
+                isVerified = true;
+            }
+        }
+        return isVerified;
     }
 
     @Override
@@ -145,7 +149,7 @@ public class UserServiceImpl implements UserService {
         return new User(
                 userEntity.getEmail(),
                 userEntity.getEncryptedPassword(),
-                true,
+                userEntity.getEmailVerificationStatus(),
                 true,
                 true,
                 true,
@@ -167,6 +171,7 @@ public class UserServiceImpl implements UserService {
         userEntity.setUserId(publicUserId);
         userEntity.setEncryptedPassword(encoder.encode(userDto.getPassword()));
         userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
+        userEntity.setEmailVerificationStatus(false);
         UserEntity storedUserEntity = userRepository.save(userEntity);
         //amazonSES.verifyEmail(returnValue);
         return modelMapper.map(storedUserEntity, UserDto.class);
