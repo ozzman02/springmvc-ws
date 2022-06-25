@@ -22,8 +22,8 @@ public interface UserRepository extends PagingAndSortingRepository<UserEntity, L
 
     UserEntity findUserByEmailVerificationToken(String token);
 
-    @Query(value = "select * from Users u where u.EMAIL_VERIFICATION_STATUS = 'true'",
-            countQuery = "select count(*) from Users u where u.EMAIL_VERIFICATION_STATUS = 'true'",
+    @Query(value = "select * from Users u where u.EMAIL_VERIFICATION_STATUS = 1",
+            countQuery = "select count(*) from Users u where u.EMAIL_VERIFICATION_STATUS = 1",
             nativeQuery = true)
     Page<UserEntity> findAllUsersWithConfirmedEmailAddress(Pageable pageableRequest);
 
@@ -60,4 +60,10 @@ public interface UserRepository extends PagingAndSortingRepository<UserEntity, L
     void updateUserEntityEmailVerificationStatus(
             @Param("emailVerificationStatus") boolean emailVerificationStatus,
             @Param("userId") String userId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "delete from Users where email = 'test@test.com'", nativeQuery = true)
+    void deleteTestUsers();
+
 }
