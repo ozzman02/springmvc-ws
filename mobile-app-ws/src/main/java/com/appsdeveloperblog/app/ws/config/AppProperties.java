@@ -1,4 +1,4 @@
-package com.appsdeveloperblog.app.ws.security;
+package com.appsdeveloperblog.app.ws.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;

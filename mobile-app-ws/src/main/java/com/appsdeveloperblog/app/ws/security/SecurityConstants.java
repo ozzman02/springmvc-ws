@@ -1,5 +1,6 @@
 package com.appsdeveloperblog.app.ws.security;
 
+import com.appsdeveloperblog.app.ws.config.AppProperties;
 import com.appsdeveloperblog.app.ws.config.SpringApplicationContext;
 
 public class SecurityConstants {
