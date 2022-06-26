@@ -22,10 +22,16 @@ public interface UserRepository extends PagingAndSortingRepository<UserEntity, L
 
     UserEntity findUserByEmailVerificationToken(String token);
 
+    @Query(value = "select * from Users u where u.EMAIL_VERIFICATION_STATUS = true",
+            countQuery = "select count(*) from Users u where u.EMAIL_VERIFICATION_STATUS = true",
+            nativeQuery = true)
+    Page<UserEntity> findAllUsersWithConfirmedEmailAddress(Pageable pageableRequest);
+
+    /* Use this query when using MySQL
     @Query(value = "select * from Users u where u.EMAIL_VERIFICATION_STATUS = 1",
             countQuery = "select count(*) from Users u where u.EMAIL_VERIFICATION_STATUS = 1",
             nativeQuery = true)
-    Page<UserEntity> findAllUsersWithConfirmedEmailAddress(Pageable pageableRequest);
+    Page<UserEntity> findAllUsersWithConfirmedEmailAddress(Pageable pageableRequest);*/
 
     @Query(value = "select * from Users u where u.first_name = ?1", nativeQuery = true)
     List<UserEntity> findUserByFirstName(String firstName);

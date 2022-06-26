@@ -28,6 +28,9 @@ public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AddressRepository addressRepository;
+
     private static boolean recordsCreated;
 
     @BeforeEach
@@ -41,6 +44,7 @@ public class UserRepositoryTest {
     public void cleanUp(){
         System.out.println("After All cleanUp() method called");
         userRepository.deleteTestUsers();
+        addressRepository.deleteTestAddresses();
     }
 
     @Test
