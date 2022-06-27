@@ -1,9 +1,9 @@
-package com.appsdeveloperblog.app.ws.security;
+package com.appsdeveloperblog.app.ws.config;
 
-import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/* We are using configuration source in spring security configuration */
 //@Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -14,4 +14,5 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("*")
                 .allowedOrigins("*");
     }
+
 }
