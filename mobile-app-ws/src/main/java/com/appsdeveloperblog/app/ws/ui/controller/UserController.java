@@ -11,6 +11,9 @@ import com.appsdeveloperblog.app.ws.ui.model.response.AddressResource;
 import com.appsdeveloperblog.app.ws.ui.model.response.OperationStatusModel;
 import com.appsdeveloperblog.app.ws.ui.model.response.RequestOperationStatus;
 import com.appsdeveloperblog.app.ws.ui.model.response.UserResource;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +40,17 @@ public class UserController {
 
     private static final String ADDRESSES_LINK_NAME = "addresses";
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    private final AddressService addressService;
 
     @Autowired
-    private AddressService addressService;
+    public UserController(UserService userService, AddressService addressService) {
+        this.userService = userService;
+        this.addressService = addressService;
+    }
 
-    /*@ApiOperation(
+    @ApiOperation(
             value = "The Get User Details Web Service Endpoint",
             notes = "${userController.GetUser.ApiOperation.Notes}"
     )
@@ -53,7 +60,7 @@ public class UserController {
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })*/
+    })
     @GetMapping(
             path = "/{id}",
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
@@ -75,13 +82,13 @@ public class UserController {
         return modelMapper.map(createdUser, UserResource.class);
     }
 
-    /*@ApiImplicitParams({
+    @ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })*/
+    })
     @PutMapping(
             path = "/{id}",
             consumes = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE },
@@ -93,13 +100,13 @@ public class UserController {
         return new ModelMapper().map(updateUser, UserResource.class);
     }
 
-    /*@ApiImplicitParams({
+    @ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })*/
+    })
     @DeleteMapping(
             path = "/{id}",
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
@@ -112,13 +119,13 @@ public class UserController {
         return returnValue;
     }
 
-    /*@ApiImplicitParams({
+    @ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })*/
+    })
     @GetMapping(produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public List<UserResource> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
                                        @RequestParam(value = "limit", defaultValue = "2") int limit) {
@@ -127,13 +134,13 @@ public class UserController {
         return new ModelMapper().map(users, listType);
     }
 
-    /*@ApiImplicitParams({
+    @ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })*/
+    })
     @GetMapping(
             path = "/{id}/addresses",
             produces = {
@@ -160,13 +167,13 @@ public class UserController {
         return CollectionModel.of(addressResourceList);
     }
 
-    /*@ApiImplicitParams({
+    @ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
                     value="${userController.authorizationHeader.description}",
                     paramType="header"
             )
-    })*/
+    })
     @GetMapping(
             path = "/{userId}/addresses/{addressId}",
             produces = {

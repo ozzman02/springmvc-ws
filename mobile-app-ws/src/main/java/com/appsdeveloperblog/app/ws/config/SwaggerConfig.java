@@ -2,7 +2,10 @@ package com.appsdeveloperblog.app.ws.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.hateoas.client.LinkDiscoverer;
+import org.springframework.hateoas.client.LinkDiscoverers;
+import org.springframework.hateoas.mediatype.collectionjson.CollectionJsonLinkDiscoverer;
+import org.springframework.plugin.core.SimplePluginRegistry;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -19,13 +22,12 @@ import java.util.List;
 
 @Configuration
 @EnableSwagger2
-@EnableWebMvc
 public class SwaggerConfig {
 
     Contact contact = new Contact(
             "Oscar Santamaria",
             "http://www.appsdeveloperblog.com",
-            "developer@appsdeveloperblog.com"
+            "osantamaria@gmail.com"
     );
 
     List<VendorExtension> vendorExtensions = new ArrayList<>();
@@ -41,13 +43,21 @@ public class SwaggerConfig {
             vendorExtensions);
 
     @Bean
+    public LinkDiscoverers discoverers() {
+        List<LinkDiscoverer> plugins = new ArrayList<>();
+        plugins.add(new CollectionJsonLinkDiscoverer());
+        return new LinkDiscoverers(SimplePluginRegistry.create(plugins));
+    }
+
+    @Bean
     public Docket apiDocket() {
 
         Docket docket = new Docket(DocumentationType.SWAGGER_2)
                 .protocols(new HashSet<>(Arrays.asList("HTTP","HTTPs")))
                 .apiInfo(apiInfo)
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com.appsdeveloperblog.app.ws")).paths(PathSelectors.any())
+                .apis(RequestHandlerSelectors.basePackage("com.appsdeveloperblog.app.ws"))
+                .paths(PathSelectors.any())
                 .build();
 
         return docket;
