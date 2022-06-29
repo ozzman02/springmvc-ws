@@ -3,8 +3,11 @@ package com.appsdeveloperblog.app.ws.service.impl;
 import com.appsdeveloperblog.app.ws.exceptions.ServiceException;
 import com.appsdeveloperblog.app.ws.io.entity.PasswordResetTokenEntity;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
+import com.appsdeveloperblog.app.ws.io.repository.AuthorityRepository;
 import com.appsdeveloperblog.app.ws.io.repository.PasswordResetTokenRepository;
+import com.appsdeveloperblog.app.ws.io.repository.RoleRepository;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
+import com.appsdeveloperblog.app.ws.security.UserPrincipal;
 import com.appsdeveloperblog.app.ws.service.UserService;
 import com.appsdeveloperblog.app.ws.shared.AmazonSES;
 import com.appsdeveloperblog.app.ws.shared.Utils;
@@ -18,7 +21,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,8 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
+
+import static com.appsdeveloperblog.app.ws.shared.Roles.ROLE_USER;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -40,16 +43,21 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder encoder;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final AmazonSES amazonSES;
+    private final AuthorityRepository authorityRepository;
+    private final RoleRepository roleRepository;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository, Utils utils, BCryptPasswordEncoder encoder,
                            PasswordResetTokenRepository passwordResetTokenRepository,
-                           AmazonSES amazonSES) {
+                           AmazonSES amazonSES, AuthorityRepository authorityRepository,
+                           RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.utils = utils;
         this.encoder = encoder;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.amazonSES = amazonSES;
+        this.roleRepository = roleRepository;
+        this.authorityRepository = authorityRepository;
     }
 
     @Override
@@ -176,7 +184,8 @@ public class UserServiceImpl implements UserService {
         if (userEntity == null) {
             throw new UsernameNotFoundException(email);
         }
-        return new User(
+        return new UserPrincipal(userEntity);
+        /*return new User(
                 userEntity.getEmail(),
                 userEntity.getEncryptedPassword(),
                 userEntity.getEmailVerificationStatus(),
@@ -184,7 +193,7 @@ public class UserServiceImpl implements UserService {
                 true,
                 true,
                 new ArrayList<>()
-        );
+        );*/
     }
 
     private UserDto buildUserDto(UserDto userDto) {
@@ -201,7 +210,8 @@ public class UserServiceImpl implements UserService {
         userEntity.setUserId(publicUserId);
         userEntity.setEncryptedPassword(encoder.encode(userDto.getPassword()));
         userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
-        userEntity.setEmailVerificationStatus(false);
+        userEntity.setEmailVerificationStatus(Boolean.TRUE);
+        userEntity.setRoles(List.of(roleRepository.findByName(ROLE_USER.name())));
         UserEntity storedUserEntity = userRepository.save(userEntity);
         UserDto returnedUserDto = modelMapper.map(storedUserEntity, UserDto.class);
         amazonSES.verifyEmail(returnedUserDto);

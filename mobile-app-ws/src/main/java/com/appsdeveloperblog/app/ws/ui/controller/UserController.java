@@ -22,6 +22,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Type;
@@ -100,6 +101,7 @@ public class UserController {
         return new ModelMapper().map(updateUser, UserResource.class);
     }
 
+    /* Deletes the record if the logged-in user has role admin or if it owns the record */
     @ApiImplicitParams({
             @ApiImplicitParam(
                     name="authorization",
@@ -107,6 +109,7 @@ public class UserController {
                     paramType="header"
             )
     })
+    @PreAuthorize("hasRole('ROLE_ADMIN') OR #id == principal.userId")
     @DeleteMapping(
             path = "/{id}",
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
